@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import sortBy from 'lodash/sortBy';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import '../AsyncStoragePractice/Storage';
+
 const COLORS = {
   primary: '#1f145c',
   white: '#fff',
@@ -77,25 +78,48 @@ const App = () => {
   // get data from device
   const getTodosFromDevice = async () => {
     try {
-      const todos = await AsyncStorage.getItem('todos');
-      if (todos !== null) {
-        setTodos(JSON.parse(todos));
-      }
+      // const todosList = await AsyncStorage.getItem('todos');
+      global.storage
+        .load({
+          key: 'todos',
+          id: 'todos',
+        })
+        .then(data => {
+          // 如果找到数据，则在then方法中返回
+          // 注意：这是异步返回的结果（不了解异步请自行搜索学习）
+          // 你只能在then这个方法内继续处理ret数据
+          // 而不能在then以外处理
+          // 也没有办法“变成”同步返回
+          // 你也可以使用“看似”同步的async/await语法
+
+          // console.log(ret);
+          setTodos(data);
+        });
     } catch (error) {
-      console.log(error);
+      console.log('Failed to load todos', error);
     }
   };
 
-  const saveTodosToUserDevice = async () => {
+  const saveTodosToUserDevice = async todos => {
     try {
-      const stringifyTodos = JSON.stringify(todos);
-      await AsyncStorage.setItem('todos', stringifyTodos);
+      // const stringifyTodos = JSON.stringify(todos);
+      // await AsyncStorage.setItem('todos', stringifyTodos);
+      await global.storage.save({
+        key: 'todos',
+        id: 'todos',
+        data: todos,
+      });
+      console.log('Todos successfully saved:', todos);
     } catch (error) {
-      console.log(error);
+      console.log('Failed to save todos', error);
     }
   };
 
   const getSortedState = data => sortBy(data, ['completed', 'time']);
+  // const getSortedState = data =>
+  //   data.sort((a, b) =>
+  //     a.completed === b.completed ? a.time - b.time : a.completed ? 1 : -1,
+  //   );
 
   const ListItem = ({todo}) => {
     return (
@@ -128,7 +152,6 @@ const App = () => {
       </View>
     );
   };
-
   useEffect(() => {
     getTodosFromDevice();
   }, []);
@@ -136,6 +159,7 @@ const App = () => {
   useEffect(() => {
     saveTodosToUserDevice(todos);
   }, [todos]);
+
   return (
     <SafeAreaView
       style={{
